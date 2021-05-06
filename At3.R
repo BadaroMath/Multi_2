@@ -13,8 +13,8 @@ source('https://raw.githubusercontent.com/vqv/ggbiplot/master/R/ggscreeplot.r')
 d3 = as.data.frame(read_xlsx("d3.xlsx"))
 d3$ETARIA = as.factor(d3$ETARIA)
 
-## Matriz de covari√¢ncias
-mcov = cov(d3[,c(4,5,7,8)])
+## Matriz de covari√É¬¢ncias
+mcov = cor(d3[,c(4,5,7,8)])
 
 
 
@@ -51,22 +51,32 @@ d3.pca <- prcomp(d3[,c(4,5,7,8)], center = TRUE,scale. = TRUE)
 summary(d3.pca)
 d3.sexo <- c(rep("Feminino", 40), rep("Masculino",40))
 
-g1 = ggbiplot(d3.pca)+
-  geom_point(fill = "powderblue", colour = "dodgerblue3", shape = 21, size = 2)+
-  theme_minimal(); g1
 
-g2 = ggbiplot(d3.pca, ellipse = TRUE, labels=substring(d3[,1],1,1), groups = d3.sexo)+
-  theme_minimal(); g2 + labs(colour = "Sexo")
+p = fviz_eig(d3.pca, addlabels = TRUE, ylim = c(0, 100));p
 
-g3 = ggbiplot(d3.pca,ellipse=TRUE,  labels = substring(d3[,1],1,1), groups = d3$ETARIA)+
-  theme_minimal(); g3 + labs(colour = "Faixa et·ria")
-
-g4 = ggbiplot(d3.pca,ellipse=TRUE, choices = c(3,4), labels = substring(d3[,1],1,1), groups = d3$ETARIA)+
-  theme_minimal(); g4 + labs(colour = "Faixa et·ria")
-
-pca=PCA(d3[,c(4,5,7,8)], graph=T)
+p1 <- fviz_pca_ind(d3.pca, label="none", habillage=d3.sexo,
+                  addEllipses=F, ellipse.level=0.95);p1
 
 
-pcacor=PCA(d3[,c(4,5,7,8)], scale.unit = T,graph=TRUE)
-fviz_pca_var(d3.pca, col.var="contrib")+
-  theme_minimal()
+p2 <- fviz_pca_biplot(d3.pca, label="var", habillage=d3.sexo,
+                     addEllipses=T, ellipse.level=0.95);p2
+
+
+p3 <- fviz_pca_biplot(d3.pca, label="var", habillage=d3$ETARIA,
+                      addEllipses=T, ellipse.level=0.95);p3
+
+p4 <- fviz_pca_biplot(d3.pca,axes=c(3,4), label="var", habillage=d3$ETARIA,
+                      addEllipses=T, ellipse.level=0.95);p4
+
+library("corrplot")
+var <- get_pca_var(d3.pca)
+corrplot(var$cos2, is.corr=F)
+
+library(gridExtra)
+d3.pca$rotation
+a12 = fviz_cos2(d3.pca, choice = "var", axes = 1:2)+
+  ylim(c(0,1))
+a34 = fviz_cos2(d3.pca, choice = "var", axes = 3:4)+
+  ylim(c(0,1))
+
+grid.arrange(a12, a34, ncol=2)
